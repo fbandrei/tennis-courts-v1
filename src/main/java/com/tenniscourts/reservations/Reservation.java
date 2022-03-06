@@ -42,4 +42,6 @@ public class Reservation extends BaseEntity<Long> {
     private ReservationStatus reservationStatus = ReservationStatus.READY_TO_PLAY;
 
     private BigDecimal refundValue;
+
+    private BigDecimal cancelOrRescheduleFee;
 }

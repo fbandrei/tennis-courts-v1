@@ -17,7 +17,9 @@ public class ReservationService {
     private final ReservationMapper reservationMapper;
 
     public ReservationDTO bookReservation(CreateReservationRequestDTO createReservationRequestDTO) {
-        throw new UnsupportedOperationException();
+        final Reservation r = reservationMapper.map(createReservationRequestDTO);
+        r.setValue(BigDecimal.valueOf(10));
+        return reservationMapper.map(reservationRepository.saveAndFlush(r));
     }
 
     public ReservationDTO findReservation(Long reservationId) {
@@ -61,11 +63,31 @@ public class ReservationService {
         }
     }
 
+    /*
+        Small remark about this task:
+        "9. As a Tennis Court Admin, I want to keep 25% of the reservation fee if the User cancels or reschedules between 12:00 and 23:59 hours in advance,
+        50% between 2:00 and 11:59 in advance, and 75% between 0:01 and 2:00 in advance."
+
+        In the last case for 75% the upper bound should be 1:59 (because 2:00 is already covered at previous case 50%)
+     */
+
     public BigDecimal getRefundValue(Reservation reservation) {
         long hours = ChronoUnit.HOURS.between(LocalDateTime.now(), reservation.getSchedule().getStartDateTime());
 
         if (hours >= 24) {
             return reservation.getValue();
+        } else if (hours >= 12 && hours <= 23) {
+            BigDecimal fee = reservation.getValue().multiply(BigDecimal.valueOf(25)).divide(BigDecimal.valueOf(100));
+            reservation.setCancelOrRescheduleFee(fee);
+            return reservation.getValue().subtract(fee);
+        } else if (hours >= 2 && hours <= 11) {
+            BigDecimal fee = reservation.getValue().multiply(BigDecimal.valueOf(50)).divide(BigDecimal.valueOf(100));
+            reservation.setCancelOrRescheduleFee(fee);
+            return reservation.getValue().subtract(fee);
+        } else if (hours >= 0 && hours <= 1) {
+            BigDecimal fee = reservation.getValue().multiply(BigDecimal.valueOf(75)).divide(BigDecimal.valueOf(100));
+            reservation.setCancelOrRescheduleFee(fee);
+            return reservation.getValue().subtract(fee);
         }
 
         return BigDecimal.ZERO;
@@ -73,6 +95,12 @@ public class ReservationService {
 
     /*TODO: This method actually not fully working, find a way to fix the issue when it's throwing the error:
             "Cannot reschedule to the same slot.*/
+
+    /*
+        I could not figure out what exactly it's the problem with this method.
+        Is it that it should not throw the exception at all and handle that scenario differently?
+        Meaning that rescheduling to the same slot is perfectly fine?
+     */
     public ReservationDTO rescheduleReservation(Long previousReservationId, Long scheduleId) {
         Reservation previousReservation = cancel(previousReservationId);
 

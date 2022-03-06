@@ -1,6 +1,7 @@
 package com.tenniscourts.schedules;
 
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 import java.util.List;
 
@@ -12,4 +13,8 @@ public interface ScheduleMapper {
     ScheduleDTO map(Schedule source);
 
     List<ScheduleDTO> map(List<Schedule> source);
+
+    @Mapping(target = "tennisCourt.id", source = "tennisCourtId")
+    @Mapping(target = "startDateTime", source = "startDateTime")
+    Schedule map(CreateScheduleRequestDTO source);
 }

@@ -29,6 +29,8 @@ public class ReservationDTO {
 
     private BigDecimal refundValue;
 
+    private BigDecimal cancelOrRescheduleFee;
+
     private BigDecimal value;
 
     @NotNull
